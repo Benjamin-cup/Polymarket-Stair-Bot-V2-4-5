@@ -23,6 +23,33 @@ def _snap(p: float, nd: int = 4) -> float:
     return round(float(p), nd)
 
 
+def _order_id_from_response(resp: Any) -> str:
+    if not isinstance(resp, dict):
+        return ""
+    for key in ("orderID", "orderId", "order_id"):
+        v = resp.get(key)
+        if v is not None and str(v).strip():
+            return str(v).strip()
+    return ""
+
+
+def _order_submit_response_ok(resp: Any) -> bool:
+    """True if CLOB accepted the order (matched, live, etc.)."""
+    if not isinstance(resp, dict):
+        return False
+    err = str(resp.get("errorMsg") or resp.get("message") or "").strip()
+    if resp.get("success") is True:
+        return True
+    if resp.get("success") is False:
+        return False
+    if err:
+        return False
+    st = str(resp.get("status") or resp.get("orderStatus") or "").lower()
+    if st in ("matched", "live", "open", "pending", "delayed"):
+        return True
+    return bool(_order_id_from_response(resp))
+
+
 @dataclass
 class SellStrategyRunner:
     """Stateful sell logic driven once per monitor poll."""
@@ -75,6 +102,8 @@ class SellStrategyRunner:
     # Latest tick context for execution hook (set in on_tick).
     _ctx_bid_yes: float = 0.0
     _ctx_bid_no: float = 0.0
+    _ctx_ask_yes: float | None = None
+    _ctx_ask_no: float | None = None
     _ctx_remaining_s: float = 0.0
     _ctx_snapshot_ts: datetime | None = None
     _ctx_orderbook_yes: Any | None = None
@@ -125,6 +154,27 @@ class SellStrategyRunner:
         bid_h = self._bid_for_side(bid_yes, bid_no, self.locked_high_side)
         return self.low_sell_price + bid_h
 
+    def _fresh_limit_price_sell(self, token_side: str, fallback: float) -> float:
+        if not self.cfg.order_refresh_price_on_retry:
+            return fallback
+        bid = self._ctx_bid_yes if token_side.lower() == "yes" else self._ctx_bid_no
+        if bid and float(bid) > 0:
+            return float(bid)
+        return fallback
+
+    def _fresh_limit_price_buy(self, token_side: str, fallback: float) -> float:
+        if not self.cfg.order_refresh_price_on_retry:
+            return fallback
+        if token_side.lower() == "yes":
+            ask, bid = self._ctx_ask_yes, self._ctx_bid_yes
+        else:
+            ask, bid = self._ctx_ask_no, self._ctx_bid_no
+        if ask is not None and float(ask) > 0:
+            return float(ask)
+        if bid and float(bid) > 0:
+            return float(bid)
+        return fallback
+
     def _append_log(self, row: dict[str, Any]) -> None:
         if not self.trade_log_path:
             return
@@ -148,7 +198,7 @@ class SellStrategyRunner:
         min_s = cfg.min_sell_shares
         if size < min_s:
             return False
-        price = max(0.01, min(0.99, _snap(price, 6)))
+        initial_px = max(0.01, min(0.99, _snap(price, 6)))
         size = _snap(size, 6)
 
         row: dict[str, Any] = {
@@ -157,7 +207,7 @@ class SellStrategyRunner:
             "event": "SELL_LIMIT",
             "token_side": token_side.upper(),
             "token_id": tid,
-            "price": price,
+            "price": initial_px,
             "size": size,
             "reason": reason,
             "dry_run": self.dry_run,
@@ -232,38 +282,78 @@ class SellStrategyRunner:
             self.any_sell_done = True
             return True
 
-        try:
-            if tid not in self._neg_cache:
-                self._neg_cache[tid] = await self.clob.get_neg_risk(tid)
-            if tid not in self._tick_cache:
-                self._tick_cache[tid] = await self.clob.get_tick_size(tid)
-            if tid not in self._fee_cache:
-                self._fee_cache[tid] = await self.clob.get_fee_rate_bps(tid)
+        max_r = max(1, int(cfg.order_submit_max_retries))
+        delay = max(0.0, float(cfg.order_submit_retry_delay_s))
+        last_resp: Any = None
+        last_err: str | None = None
+        px_loop = initial_px
+        for attempt in range(1, max_r + 1):
+            if attempt > 1:
+                px_loop = self._fresh_limit_price_sell(token_side, initial_px)
+            px_loop = max(0.01, min(0.99, _snap(px_loop, 6)))
+            try:
+                if tid not in self._neg_cache:
+                    self._neg_cache[tid] = await self.clob.get_neg_risk(tid)
+                if tid not in self._tick_cache:
+                    self._tick_cache[tid] = await self.clob.get_tick_size(tid)
+                if tid not in self._fee_cache:
+                    self._fee_cache[tid] = await self.clob.get_fee_rate_bps(tid)
 
-            signed = await asyncio.to_thread(
-                self.clob.create_order,
-                tid,
-                "SELL",
-                price,
-                size,
-                self._neg_cache[tid],
-                self._fee_cache[tid],
-                self._tick_cache[tid],
-            )
-            resp = await self.clob.post_order(signed, cfg.sell_order_type)
-            row["status"] = "submitted"
-            row["response"] = resp
-            self._append_log(row)
-            print(f"  {self.tag} [SELL] {reason} {token_side.upper()} px={price:.4f} sz={size:.4f} ok")
-            self._set_rem(token_side, self._rem_for_side(token_side) - size)
-            self.any_sell_done = True
-            return True
-        except Exception as e:
-            row["status"] = "error"
-            row["error"] = str(e)
-            self._append_log(row)
-            print(f"  {self.tag} [SELL ERROR] {reason}: {e}")
-            return False
+                signed = await asyncio.to_thread(
+                    self.clob.create_order,
+                    tid,
+                    "SELL",
+                    px_loop,
+                    size,
+                    self._neg_cache[tid],
+                    self._fee_cache[tid],
+                    self._tick_cache[tid],
+                )
+                resp = await self.clob.post_order(signed, cfg.sell_order_type)
+                last_resp = resp
+                if _order_submit_response_ok(resp):
+                    oid = _order_id_from_response(resp)
+                    done_row = {
+                        **row,
+                        "price": px_loop,
+                        "status": "submitted",
+                        "order_id": oid,
+                        "submit_attempt": attempt,
+                        "submit_max_retries": max_r,
+                        "response": resp,
+                    }
+                    self._append_log(done_row)
+                    oid_part = f" order_id={oid}" if oid else ""
+                    print(
+                        f"  {self.tag} [SELL] {reason} {token_side.upper()} "
+                        f"px={px_loop:.4f} sz={size:.4f} ok{oid_part} (attempt {attempt}/{max_r})",
+                    )
+                    self._set_rem(token_side, self._rem_for_side(token_side) - size)
+                    self.any_sell_done = True
+                    return True
+                if isinstance(resp, dict):
+                    last_err = str(resp.get("errorMsg") or resp.get("error") or resp).strip() or repr(
+                        resp
+                    )
+                else:
+                    last_err = repr(resp)
+            except Exception as e:
+                last_err = str(e)
+                last_resp = None
+            if attempt < max_r and delay > 0:
+                await asyncio.sleep(delay)
+
+        fail_row = {
+            **row,
+            "price": px_loop,
+            "status": "error",
+            "error": last_err,
+            "submit_attempts": max_r,
+            "response": last_resp,
+        }
+        self._append_log(fail_row)
+        print(f"  {self.tag} [SELL ERROR] {reason} after {max_r} attempts: {last_err}")
+        return False
 
     async def _place_buy_limit(
         self,
@@ -277,7 +367,7 @@ class SellStrategyRunner:
         min_s = cfg.min_sell_shares
         if size < min_s:
             return False
-        price = max(0.01, min(0.99, _snap(price, 6)))
+        initial_px = max(0.01, min(0.99, _snap(price, 6)))
         size = _snap(size, 6)
         order_type = cfg.hedge_order_type or cfg.sell_order_type
 
@@ -287,7 +377,7 @@ class SellStrategyRunner:
             "event": "BUY_LIMIT",
             "token_side": token_side.upper(),
             "token_id": tid,
-            "price": price,
+            "price": initial_px,
             "size": size,
             "reason": reason,
             "dry_run": self.dry_run,
@@ -298,7 +388,7 @@ class SellStrategyRunner:
             row["status"] = "simulated" if (self.dry_run or self.paper_trading) else "no_clob"
             self._append_log(row)
             print(
-                f"  {self.tag} [BUY] {reason} {token_side.upper()} px={price:.4f} sz={size:.4f} "
+                f"  {self.tag} [BUY] {reason} {token_side.upper()} px={initial_px:.4f} sz={size:.4f} "
                 f"({'PAPER' if self.paper_trading else 'DRY' if self.dry_run else 'SKIP'})"
             )
             buy_fill = size
@@ -306,7 +396,7 @@ class SellStrategyRunner:
                 ts = self._ctx_snapshot_ts or datetime.now(UTC)
                 res = await self.paper_execution_hook.execute_buy_limit(
                     token_side=token_side,
-                    limit_price=price,
+                    limit_price=initial_px,
                     size=size,
                     reason=reason,
                     decision_ts=ts,
@@ -322,37 +412,77 @@ class SellStrategyRunner:
             self._set_rem(token_side, self._rem_for_side(token_side) + buy_fill)
             return True
 
-        try:
-            if tid not in self._neg_cache:
-                self._neg_cache[tid] = await self.clob.get_neg_risk(tid)
-            if tid not in self._tick_cache:
-                self._tick_cache[tid] = await self.clob.get_tick_size(tid)
-            if tid not in self._fee_cache:
-                self._fee_cache[tid] = await self.clob.get_fee_rate_bps(tid)
+        max_r = max(1, int(cfg.order_submit_max_retries))
+        delay = max(0.0, float(cfg.order_submit_retry_delay_s))
+        last_resp: Any = None
+        last_err: str | None = None
+        px_loop = initial_px
+        for attempt in range(1, max_r + 1):
+            if attempt > 1:
+                px_loop = self._fresh_limit_price_buy(token_side, initial_px)
+            px_loop = max(0.01, min(0.99, _snap(px_loop, 6)))
+            try:
+                if tid not in self._neg_cache:
+                    self._neg_cache[tid] = await self.clob.get_neg_risk(tid)
+                if tid not in self._tick_cache:
+                    self._tick_cache[tid] = await self.clob.get_tick_size(tid)
+                if tid not in self._fee_cache:
+                    self._fee_cache[tid] = await self.clob.get_fee_rate_bps(tid)
 
-            signed = await asyncio.to_thread(
-                self.clob.create_order,
-                tid,
-                "BUY",
-                price,
-                size,
-                self._neg_cache[tid],
-                self._fee_cache[tid],
-                self._tick_cache[tid],
-            )
-            resp = await self.clob.post_order(signed, order_type)
-            row["status"] = "submitted"
-            row["response"] = resp
-            self._append_log(row)
-            print(f"  {self.tag} [BUY] {reason} {token_side.upper()} px={price:.4f} sz={size:.4f} ok")
-            self._set_rem(token_side, self._rem_for_side(token_side) + size)
-            return True
-        except Exception as e:
-            row["status"] = "error"
-            row["error"] = str(e)
-            self._append_log(row)
-            print(f"  {self.tag} [BUY ERROR] {reason}: {e}")
-            return False
+                signed = await asyncio.to_thread(
+                    self.clob.create_order,
+                    tid,
+                    "BUY",
+                    px_loop,
+                    size,
+                    self._neg_cache[tid],
+                    self._fee_cache[tid],
+                    self._tick_cache[tid],
+                )
+                resp = await self.clob.post_order(signed, order_type)
+                last_resp = resp
+                if _order_submit_response_ok(resp):
+                    oid = _order_id_from_response(resp)
+                    done_row = {
+                        **row,
+                        "price": px_loop,
+                        "status": "submitted",
+                        "order_id": oid,
+                        "submit_attempt": attempt,
+                        "submit_max_retries": max_r,
+                        "response": resp,
+                    }
+                    self._append_log(done_row)
+                    oid_part = f" order_id={oid}" if oid else ""
+                    print(
+                        f"  {self.tag} [BUY] {reason} {token_side.upper()} "
+                        f"px={px_loop:.4f} sz={size:.4f} ok{oid_part} (attempt {attempt}/{max_r})",
+                    )
+                    self._set_rem(token_side, self._rem_for_side(token_side) + size)
+                    return True
+                if isinstance(resp, dict):
+                    last_err = str(resp.get("errorMsg") or resp.get("error") or resp).strip() or repr(
+                        resp
+                    )
+                else:
+                    last_err = repr(resp)
+            except Exception as e:
+                last_err = str(e)
+                last_resp = None
+            if attempt < max_r and delay > 0:
+                await asyncio.sleep(delay)
+
+        fail_row = {
+            **row,
+            "price": px_loop,
+            "status": "error",
+            "error": last_err,
+            "submit_attempts": max_r,
+            "response": last_resp,
+        }
+        self._append_log(fail_row)
+        print(f"  {self.tag} [BUY ERROR] {reason} after {max_r} attempts: {last_err}")
+        return False
 
     def _append_process_snapshot(self, bid_yes: float, bid_no: float, remaining_s: float) -> None:
         if not self.process_log_path:
@@ -422,6 +552,8 @@ class SellStrategyRunner:
     ) -> None:
         self._ctx_bid_yes = bid_yes
         self._ctx_bid_no = bid_no
+        self._ctx_ask_yes = ask_yes
+        self._ctx_ask_no = ask_no
         self._ctx_remaining_s = remaining_s
         self._ctx_snapshot_ts = snapshot_ts
         self._ctx_orderbook_yes = orderbook_yes

@@ -48,6 +48,9 @@ sell_strategy:
   hedge_buy_size_multiplier: 1.7
   hedge_order_type: GTC
   hedge_repeat_enabled: true
+  order_submit_max_retries: 10
+  order_submit_retry_delay_s: 0.1
+  order_refresh_price_on_retry: true
 
 # Strike target: chainlink = Chainlink Data Streams (matches Polymarket resolution). Set creds + feed_ids (see .env.example).
 # Fallback: Polymarket event page, then Coinbase candle.
