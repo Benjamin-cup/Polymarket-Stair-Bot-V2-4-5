@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from polybot5m.config import MarketTarget, Settings, StrikeSpotContext
+from polybot5m.config import ExecutionConfig, LiquidityMakerConfig, MarketTarget, Settings, StrikeSpotContext
 from polybot5m.constants import INTERVAL_SECONDS
 from polybot5m.data.slug_builder import compute_epoch_slugs
 from polybot5m.time_utils import format_utc_iso_z
@@ -45,6 +45,74 @@ def _append_export(export_path: Path | None, record: dict) -> None:
 
 def _tag(symbol: str, epoch: str) -> str:
     return f"[{symbol}/{epoch}]"
+
+
+async def _resolve_split_allocation_usdc(
+    lm: LiquidityMakerConfig,
+    exe: ExecutionConfig,
+    *,
+    paper_trading: bool,
+    tag: str,
+) -> tuple[float, dict[str, Any]]:
+    """Fixed `portfolio_allocation_usdc`, or fraction of proxy USDC.e balance when configured."""
+    from eth_account import Account
+
+    from polybot5m.execution.wallet_balance import (
+        clamp_split_allocation_usdc,
+        fetch_usdce_balance_usdc,
+    )
+
+    fixed = float(lm.portfolio_allocation_usdc)
+    meta: dict[str, Any] = {
+        "allocation_source": "fixed_config",
+        "proxy_balance_usdc": None,
+        "allocation_fraction": None,
+    }
+    if paper_trading or not bool(getattr(lm, "portfolio_allocation_from_balance", False)):
+        return fixed, meta
+
+    wallet = (exe.funder or "").strip()
+    if not wallet and exe.private_key:
+        wallet = Account.from_key(exe.private_key).address
+    rpc = (exe.rpc_url or "").strip()
+    if not wallet or not rpc:
+        print(
+            f"  {tag} allocation: from_balance on but need execution.funder (or private_key) "
+            f"and rpc_url — using fixed ${fixed:g}",
+        )
+        return fixed, meta
+
+    bal = await asyncio.to_thread(fetch_usdce_balance_usdc, rpc, wallet)
+    meta["proxy_balance_usdc"] = bal
+    meta["proxy_wallet"] = wallet
+    if bal is None:
+        print(f"  {tag} allocation: USDC.e balance read failed — using fixed ${fixed:g}")
+        return fixed, {**meta, "allocation_source": "fixed_fallback"}
+    if bal <= 0:
+        print(f"  {tag} allocation: USDC.e balance is 0 — using fixed ${fixed:g}")
+        return fixed, {**meta, "allocation_source": "fixed_fallback"}
+
+    frac = float(getattr(lm, "portfolio_allocation_balance_fraction", 0.30) or 0.30)
+    frac = max(0.0, min(1.0, frac))
+    raw = bal * frac
+    min_u = float(getattr(lm, "portfolio_allocation_min_usdc", 1.0) or 0.0)
+    max_u = getattr(lm, "portfolio_allocation_max_usdc", None)
+    alloc = clamp_split_allocation_usdc(raw, min_usdc=min_u, max_usdc=max_u)
+    alloc = min(alloc, round(bal, 6))
+    if alloc * 1_000_000 < 1:
+        print(
+            f"  {tag} allocation: computed ${alloc:g} below 1e-6 USDC — using fixed ${fixed:g}",
+        )
+        return fixed, {**meta, "allocation_source": "fixed_fallback", "allocation_fraction": frac}
+
+    cap_note = f" max={max_u}" if max_u is not None and float(max_u) > 0 else ""
+    print(
+        f"  {tag} allocation: USDC.e balance {bal:.4f} × {frac:.0%} → ${alloc:.4f} "
+        f"(min={min_u:g}{cap_note})",
+    )
+    meta["allocation_source"] = "balance_fraction"
+    meta["allocation_fraction"] = frac
+    return alloc, meta
 
 
 async def run_market_cycle(
@@ -100,23 +168,6 @@ async def run_market_cycle(
     print(f"  {tag} slug={slug}")
 
     tp_path = resolve_trading_process_path(settings)
-    if tp_path:
-        append_trading_jsonl(
-            tp_path,
-            {
-                "event": "MARKET_CYCLE_START",
-                "ts_utc": utc_iso_z(),
-                "tag": tag,
-                "symbol": target.symbol,
-                "epoch": interval,
-                "slug": slug,
-                "epoch_end": epoch_end.isoformat(),
-                "allocation_usdc": lm.portfolio_allocation_usdc,
-                "paper_trading": paper_trading,
-                "dry_run": settings.bot.dry_run,
-                "sell_strategy_enabled": settings.sell_strategy.enabled,
-            },
-        )
 
     async with aiohttp.ClientSession() as session:
         gamma = GammaClient(settings.api.gamma_url, session)
@@ -146,9 +197,36 @@ async def run_market_cycle(
     builder_api_secret = os.getenv("POLYBOT5M_EXECUTION__BUILDER_API_SECRET", "")
     builder_api_passphrase = os.getenv("POLYBOT5M_EXECUTION__BUILDER_API_PASSPHRASE", "")
 
-    allocation = lm.portfolio_allocation_usdc
+    allocation, alloc_meta = await _resolve_split_allocation_usdc(
+        lm,
+        exe,
+        paper_trading=paper_trading,
+        tag=tag,
+    )
     shares_yes = allocation
     shares_no = allocation
+
+    if tp_path:
+        append_trading_jsonl(
+            tp_path,
+            {
+                "event": "MARKET_CYCLE_START",
+                "ts_utc": utc_iso_z(),
+                "tag": tag,
+                "symbol": target.symbol,
+                "epoch": interval,
+                "slug": slug,
+                "epoch_end": epoch_end.isoformat(),
+                "allocation_usdc": allocation,
+                "allocation_source": alloc_meta.get("allocation_source"),
+                "proxy_balance_usdc": alloc_meta.get("proxy_balance_usdc"),
+                "allocation_fraction": alloc_meta.get("allocation_fraction"),
+                "portfolio_allocation_usdc_config": lm.portfolio_allocation_usdc,
+                "paper_trading": paper_trading,
+                "dry_run": settings.bot.dry_run,
+                "sell_strategy_enabled": settings.sell_strategy.enabled,
+            },
+        )
 
     log_strike_spot_iv = float(getattr(lm, "log_strike_spot_interval_s", 0.0) or 0.0)
     ss_cfg = settings.sell_strategy

@@ -72,6 +72,12 @@ price_feed:
 
 liquidity_maker:
   portfolio_allocation_usdc: 5
+  # If true: before split, read proxy wallet USDC.e on Polygon (funder or key-derived address) and split
+  #   allocation = balance × portfolio_allocation_balance_fraction (fallback to portfolio_allocation_usdc on error).
+  portfolio_allocation_from_balance: true
+  portfolio_allocation_balance_fraction: 0.33
+  portfolio_allocation_min_usdc: 1.0
+  # portfolio_allocation_max_usdc: null
   split_approve_first: true
   redeem_delay_seconds: 120
   # After redeem, poll public books this many seconds (0 = off).

@@ -162,6 +162,11 @@ class LiquidityMakerConfig(BaseModel):
     """Split → monitor order book → redeem."""
 
     portfolio_allocation_usdc: float = 1000.0
+    # If true (live / dry-run): read proxy USDC.e balance via RPC before split; allocation = balance × fraction.
+    portfolio_allocation_from_balance: bool = False
+    portfolio_allocation_balance_fraction: float = 0.30
+    portfolio_allocation_min_usdc: float = 1.0
+    portfolio_allocation_max_usdc: float | None = None
     split_approve_first: bool = True
     redeem_delay_seconds: int = 120
     stagger_delay_seconds: int = 5
