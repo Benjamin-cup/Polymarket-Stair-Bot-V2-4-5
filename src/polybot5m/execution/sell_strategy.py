@@ -56,6 +56,7 @@ class SellStrategyRunner:
     low_sell_price: float | None = None
 
     hedge_executed: bool = False
+    hedge_round_count: int = 0
     hedge_cycles_strike_lt_spot: int = 0
     hedge_cycles_strike_gt_spot: int = 0
     _hedge_warned_no_strike_spot: bool = False
@@ -391,6 +392,7 @@ class SellStrategyRunner:
             "final_unwind_fired": self.final_unwind_fired,
             "any_sell_done": self.any_sell_done,
             "hedge_executed": self.hedge_executed,
+            "hedge_round_count": self.hedge_round_count,
             "hedge_cycles_strike_lt_spot": self.hedge_cycles_strike_lt_spot,
             "hedge_cycles_strike_gt_spot": self.hedge_cycles_strike_gt_spot,
         }
@@ -401,7 +403,7 @@ class SellStrategyRunner:
                 f"  {self.tag} [TRADING_PROCESS] t={remaining_s:.1f}s YES={bid_yes:.4f} NO={bid_no:.4f} "
                 f"book_sum={bid_yes + bid_no:.4f}{ps} rem_y={self.rem_yes:.4f} rem_n={self.rem_no:.4f} "
                 f"trig={self.triggered} low_sold={self.low_sold} lock={self.locked_high_side} "
-                f"hedge_done={self.hedge_executed}",
+                f"hedge_done={self.hedge_executed} hedge_rounds={self.hedge_round_count}",
             )
 
     async def on_tick(
@@ -425,12 +427,15 @@ class SellStrategyRunner:
         self._ctx_orderbook_yes = orderbook_yes
         self._ctx_orderbook_no = orderbook_no
         try:
-            if not self.hedge_executed:
-                await self._maybe_hedge_pair(bid_yes, bid_no, strike, spot, ask_yes, ask_no)
-            if not self.hedge_executed:
+            await self._maybe_hedge_pair(bid_yes, bid_no, strike, spot, ask_yes, ask_no)
+            if self.hedge_round_count == 0:
                 await self._on_tick_inner(bid_yes, bid_no, remaining_s)
         finally:
             self._append_process_snapshot(bid_yes, bid_no, remaining_s)
+
+    def _mark_hedge_round_complete(self) -> None:
+        self.hedge_round_count += 1
+        self.hedge_executed = True
 
     async def _maybe_hedge_pair(
         self,
@@ -444,7 +449,9 @@ class SellStrategyRunner:
         cfg = self.cfg
         if not cfg.hedge_enabled:
             return
-        if self.hedge_executed or not self.low_sold or self.locked_high_side is None:
+        if not self.low_sold or self.locked_high_side is None:
+            return
+        if not cfg.hedge_repeat_enabled and self.hedge_round_count >= 1:
             return
         min_s = cfg.min_sell_shares
         hs = self.locked_high_side
@@ -453,7 +460,7 @@ class SellStrategyRunner:
         n_need = max(1, int(cfg.hedge_target_vs_spot_cycles))
         buy_sz = _snap(float(self.portfolio_allocation_usdc) * float(cfg.hedge_buy_size_multiplier), 6)
 
-        def yes_sold_first_ok() -> bool:
+        def yes_initial_phase() -> bool:
             return (
                 hs == "no"
                 and self.rem_yes < min_s
@@ -462,7 +469,16 @@ class SellStrategyRunner:
                 and bid_yes > sold_min
             )
 
-        def no_sold_first_ok() -> bool:
+        def yes_flip_phase() -> bool:
+            return (
+                hs == "no"
+                and self.rem_yes >= min_s
+                and self.rem_no < min_s
+                and bid_no < opp_max
+                and bid_yes > sold_min
+            )
+
+        def no_initial_phase() -> bool:
             return (
                 hs == "yes"
                 and self.rem_no < min_s
@@ -471,37 +487,94 @@ class SellStrategyRunner:
                 and bid_no > sold_min
             )
 
+        def no_flip_phase() -> bool:
+            return (
+                hs == "yes"
+                and self.rem_no >= min_s
+                and self.rem_yes < min_s
+                and bid_yes < opp_max
+                and bid_no > sold_min
+            )
+
+        want_initial = self.hedge_round_count % 2 == 0
+
+        async def exec_yes_arm_initial_buy_first() -> None:
+            if buy_sz < min_s:
+                return
+            buy_px = float(ask_yes) if ask_yes and ask_yes > 0 else bid_yes
+            ok_buy = await self._place_buy_limit("yes", buy_px, buy_sz, "HEDGE_BUY_YES")
+            if not ok_buy:
+                return
+            sell_no = self.rem_no
+            ok_sell = await self._place_sell_limit("no", bid_no, sell_no, "HEDGE_SELL_NO")
+            if ok_sell:
+                self._mark_hedge_round_complete()
+                print(
+                    f"  {self.tag} [HEDGE] round={self.hedge_round_count} "
+                    "buy YES then sell NO (initial)",
+                )
+
+        async def exec_yes_arm_flip_sell_first() -> None:
+            sell_yes = self.rem_yes
+            if sell_yes < min_s or buy_sz < min_s:
+                return
+            ok_sell = await self._place_sell_limit("yes", bid_yes, sell_yes, "HEDGE_SELL_YES")
+            if not ok_sell:
+                return
+            buy_px = float(ask_no) if ask_no and ask_no > 0 else bid_no
+            ok_buy = await self._place_buy_limit("no", buy_px, buy_sz, "HEDGE_BUY_NO")
+            if ok_buy:
+                self._mark_hedge_round_complete()
+                print(
+                    f"  {self.tag} [HEDGE] round={self.hedge_round_count} "
+                    "sell YES then buy NO (flip)",
+                )
+
+        async def exec_no_arm_initial_buy_first() -> None:
+            if buy_sz < min_s:
+                return
+            buy_px = float(ask_no) if ask_no and ask_no > 0 else bid_no
+            ok_buy = await self._place_buy_limit("no", buy_px, buy_sz, "HEDGE_BUY_NO")
+            if not ok_buy:
+                return
+            sell_yes = self.rem_yes
+            ok_sell = await self._place_sell_limit("yes", bid_yes, sell_yes, "HEDGE_SELL_YES")
+            if ok_sell:
+                self._mark_hedge_round_complete()
+                print(
+                    f"  {self.tag} [HEDGE] round={self.hedge_round_count} "
+                    "buy NO then sell YES (initial)",
+                )
+
+        async def exec_no_arm_flip_sell_first() -> None:
+            sell_no = self.rem_no
+            if sell_no < min_s or buy_sz < min_s:
+                return
+            ok_sell = await self._place_sell_limit("no", bid_no, sell_no, "HEDGE_SELL_NO")
+            if not ok_sell:
+                return
+            buy_px = float(ask_yes) if ask_yes and ask_yes > 0 else bid_yes
+            ok_buy = await self._place_buy_limit("yes", buy_px, buy_sz, "HEDGE_BUY_YES")
+            if ok_buy:
+                self._mark_hedge_round_complete()
+                print(
+                    f"  {self.tag} [HEDGE] round={self.hedge_round_count} "
+                    "sell NO then buy YES (flip)",
+                )
+
         # Backtest: hedge when book gates pass; no strike vs chain spot (not available in replay).
         if not self.hedge_require_strike_spot:
-            if yes_sold_first_ok():
-                if buy_sz < min_s:
-                    return
-                buy_px = float(ask_yes) if ask_yes and ask_yes > 0 else bid_yes
-                ok_buy = await self._place_buy_limit("yes", buy_px, buy_sz, "HEDGE_BUY_YES")
-                if not ok_buy:
-                    return
-                sell_no = self.rem_no
-                ok_sell = await self._place_sell_limit("no", bid_no, sell_no, "HEDGE_SELL_NO")
-                if ok_sell:
-                    self.hedge_executed = True
-                    print(
-                        f"  {self.tag} [HEDGE] buy YES + sell NO (backtest, book gates only)",
-                    )
+            if want_initial and yes_initial_phase():
+                await exec_yes_arm_initial_buy_first()
                 return
-            if no_sold_first_ok():
-                if buy_sz < min_s:
-                    return
-                buy_px = float(ask_no) if ask_no and ask_no > 0 else bid_no
-                ok_buy = await self._place_buy_limit("no", buy_px, buy_sz, "HEDGE_BUY_NO")
-                if not ok_buy:
-                    return
-                sell_yes = self.rem_yes
-                ok_sell = await self._place_sell_limit("yes", bid_yes, sell_yes, "HEDGE_SELL_YES")
-                if ok_sell:
-                    self.hedge_executed = True
-                    print(
-                        f"  {self.tag} [HEDGE] buy NO + sell YES (backtest, book gates only)",
-                    )
+            if not want_initial and yes_flip_phase():
+                await exec_yes_arm_flip_sell_first()
+                return
+            if want_initial and no_initial_phase():
+                await exec_no_arm_initial_buy_first()
+                return
+            if not want_initial and no_flip_phase():
+                await exec_no_arm_flip_sell_first()
                 return
             self.hedge_cycles_strike_lt_spot = 0
             self.hedge_cycles_strike_gt_spot = 0
@@ -511,7 +584,12 @@ class SellStrategyRunner:
             self.hedge_cycles_strike_lt_spot = 0
             self.hedge_cycles_strike_gt_spot = 0
             if (
-                (yes_sold_first_ok() or no_sold_first_ok())
+                (
+                    yes_initial_phase()
+                    or yes_flip_phase()
+                    or no_initial_phase()
+                    or no_flip_phase()
+                )
                 and not self._hedge_warned_no_strike_spot
             ):
                 self._hedge_warned_no_strike_spot = True
@@ -523,7 +601,7 @@ class SellStrategyRunner:
         st = float(strike)
         sp = float(spot)
 
-        if yes_sold_first_ok():
+        if (want_initial and yes_initial_phase()) or (not want_initial and yes_flip_phase()):
             self.hedge_cycles_strike_gt_spot = 0
             if st < sp:
                 self.hedge_cycles_strike_lt_spot += 1
@@ -531,18 +609,13 @@ class SellStrategyRunner:
                 self.hedge_cycles_strike_lt_spot = 0
             if self.hedge_cycles_strike_lt_spot < n_need or buy_sz < min_s:
                 return
-            buy_px = float(ask_yes) if ask_yes and ask_yes > 0 else bid_yes
-            ok_buy = await self._place_buy_limit("yes", buy_px, buy_sz, "HEDGE_BUY_YES")
-            if not ok_buy:
-                return
-            sell_no = self.rem_no
-            ok_sell = await self._place_sell_limit("no", bid_no, sell_no, "HEDGE_SELL_NO")
-            if ok_sell:
-                self.hedge_executed = True
-                print(f"  {self.tag} [HEDGE] buy YES + sell NO complete (no further stair sells)")
+            if want_initial:
+                await exec_yes_arm_initial_buy_first()
+            else:
+                await exec_yes_arm_flip_sell_first()
             return
 
-        if no_sold_first_ok():
+        if (want_initial and no_initial_phase()) or (not want_initial and no_flip_phase()):
             self.hedge_cycles_strike_lt_spot = 0
             if st > sp:
                 self.hedge_cycles_strike_gt_spot += 1
@@ -550,22 +623,17 @@ class SellStrategyRunner:
                 self.hedge_cycles_strike_gt_spot = 0
             if self.hedge_cycles_strike_gt_spot < n_need or buy_sz < min_s:
                 return
-            buy_px = float(ask_no) if ask_no and ask_no > 0 else bid_no
-            ok_buy = await self._place_buy_limit("no", buy_px, buy_sz, "HEDGE_BUY_NO")
-            if not ok_buy:
-                return
-            sell_yes = self.rem_yes
-            ok_sell = await self._place_sell_limit("yes", bid_yes, sell_yes, "HEDGE_SELL_YES")
-            if ok_sell:
-                self.hedge_executed = True
-                print(f"  {self.tag} [HEDGE] buy NO + sell YES complete (no further stair sells)")
+            if want_initial:
+                await exec_no_arm_initial_buy_first()
+            else:
+                await exec_no_arm_flip_sell_first()
             return
 
         self.hedge_cycles_strike_lt_spot = 0
         self.hedge_cycles_strike_gt_spot = 0
 
     async def _on_tick_inner(self, bid_yes: float, bid_no: float, remaining_s: float) -> None:
-        if self.hedge_executed:
+        if self.hedge_round_count > 0:
             return
         cfg = self.cfg
         high_side, low_side, high_bid, low_bid = self._high_low(bid_yes, bid_no)
