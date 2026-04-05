@@ -1,0 +1,112 @@
+# Polymarket split → monitor → redeem
+# Override with POLYBOT5M_ env vars
+
+bot:
+  dry_run: false
+  log_level: INFO
+  log_file: "logs/polybot5m.log"
+  log_append: false
+  log_timestamp_name: true
+
+api:
+  gamma_url: "https://gamma-api.polymarket.com"
+  clob_url: "https://clob.polymarket.com"
+  ws_url: "wss://ws-subscriptions-clob.polymarket.com"
+
+# Execution: POLYBOT5M_EXECUTION__* — private key + builder relayer + optional CLOB (see .env)
+execution:
+  derive_clob_api_creds: true
+
+# Limit sells: last sell_window_seconds_before_end before epoch end, after trigger band + consecutive cycles.
+# Trade log: trade_history_jsonl. Post-redeem: max(liquidity_maker.post_redeem_monitor_seconds, post_redeem_monitor_seconds below).
+sell_strategy:
+  enabled: true
+  sell_window_seconds_before_end: 40
+  sell_order_type: GTC
+  # Arm + LOW_FULL_OPPOSITE: high token best bid must be in this band on that monitoring tick.
+  trigger_high_bid_min: 0.92
+  trigger_high_bid_max: 0.95
+  one_side_bid_threshold: 0.90
+  one_side_consecutive_cycles: 4
+  # pair_sum = low_sell_price + current high bid; staged high + final unwind use pair_sum (not YES+NO book).
+  sum_bids_above_partial: 1.01
+  # HIGH_PARTIAL chunk shares = portfolio_allocation_usdc / this (from liquidity_maker), not rem/max_cycles.
+  high_partial_max_cycles: 10
+  # 2 = cent-level (0.90..0.99); further HIGH_PARTIAL chunks only when snapped bid changes.
+  high_bid_change_decimals: 2
+  high_bid_full_sell_threshold: 0.98
+  final_seconds_before_end: 0
+  final_unwind_if_high_below: 1
+  min_sell_shares: 0.01
+  trade_history_jsonl: "exports/sell_trade_history.jsonl"
+  post_redeem_monitor_seconds: 0
+  post_redeem_log_chain_balance: false
+  hedge_enabled: true
+  hedge_opposite_bid_below: 0.5
+  hedge_sold_side_bid_above: 0.5
+  hedge_target_vs_spot_cycles: 2
+  hedge_buy_size_multiplier: 1.7
+  hedge_order_type: GTC
+
+# Strike target: chainlink = Chainlink Data Streams (matches Polymarket resolution). Set creds + feed_ids (see .env.example).
+# Fallback: Polymarket event page, then Coinbase candle.
+# Spot for [STRIKE_SPOT] logging: coinbase = WebSocket ticker; chainlink = REST poll same feed_ids.
+price_feed:
+  provider: chainlink
+  spot_provider: coinbase
+  chainlink_spot_poll_interval_s: 5.0
+  chainlink:
+    # POLYBOT5M_PRICE_FEED__CHAINLINK__STREAMS_USER_ID / STREAMS_SECRET — from Chainlink Data Streams access
+    streams_user_id: "bbc64117-eeff-4702-94eb-71dca4461ec9"
+    streams_secret: "BV90940Ngste57OGCuqj31064q6sbv12mcpS0Kp9ZD3C34uC4QpyVp25cPa3ENTO9bL1gavlhC5ASQLbKxkDxm9bKKQAzDE1hRc7MIp8IGZ7c51cZ5gShFmE4GnJ4rI8"
+    # Per-asset feed ID hex from https://data.chain.link/streams (e.g. btc-usd → Feed ID on product page)
+    feed_ids:
+     btc: "0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8"
+     eth: "0x000362205e10b3a147d02792eccee483dca6c7b44ecce7012cb8c6e0b68b3ae9"
+     sol: "0x0003b778d3f6b2ac4991302b89cb313f99a42467d6c9c5f96f57c29c0d2bc24f"
+     xrp: "0x0003c16c6aed42294f5cb4741f6e59ba2d728f0eae2eb9e6d3f555808c59fc45"
+
+liquidity_maker:
+  portfolio_allocation_usdc: 5
+  split_approve_first: true
+  redeem_delay_seconds: 120
+  # After redeem, poll public books this many seconds (0 = off).
+  post_redeem_monitor_seconds: 0
+  # NDJSON: phases (split/monitor/redeem) + every MONITOR_TICK (bids + sell state when enabled).
+  trading_process_jsonl: "exports/trading_process.jsonl"
+  trading_process_log_interval_s: 0
+  trading_process_log_stdout: false
+  stagger_delay_seconds: 5
+  export_dir: "exports"
+  cycles: 0
+  monitor_poll_interval_s: 0.12
+  monitor_log_interval_s: 0.12
+  monitor_verbose_seconds_before_end: 90
+  # Log [STRIKE_SPOT] target=… coinbase_spot=… every N seconds per market (0 = off).
+  log_strike_spot_interval_s: 0.12
+
+  epoch: 5m
+  symbols: [btc]
+
+# Realistic backtest (polybot5m-backtest): latency, VWAP/slippage, fees, risk — see src/polybot5m/backtest/simulation.py
+backtest:
+  # Hedge in replay: bid/ask gates only (no strike vs chain spot cycles). Live `polybot run` still uses oracle logic.
+  hedge_without_chain_compare: true
+  # Tee all backtest stdout/stderr to logs/backtest/polybot5m_YYYYMMDD_HHMMSS.log (trailing / = directory + timestamped name)
+  log_file: "logs/backtest/"
+  log_append: false
+  log_timestamp_name: true
+  simulation:
+    enabled: false
+    latency_ms_min: 50
+    latency_ms_max: 500
+    fee_bps: 0
+    limit_order_fill_probability: 0.92
+    market_style_sell: true
+    random_seed: 42
+    risk:
+      spread_widen_seconds_before_end: 30
+      spread_widen_depth_mult: 0.55
+      liquidity_eviction_probability: 0.05
+      eviction_size_fraction: 0.35
+      no_exit_liquidity_probability: 0.02

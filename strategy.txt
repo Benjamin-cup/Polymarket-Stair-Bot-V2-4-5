@@ -1,0 +1,22 @@
+Split → monitor order book (optional limit sells in last window) → redeem → optional post-redeem book + chain poll
+
+- SPLIT: USDC.e → equal YES + NO (builder-relayer).
+- MONITOR: Poll public YES/NO order books until epoch end.
+  If sell_strategy.enabled: in the last sell_window_seconds_before_end seconds, arm when max bid is in
+  trigger band; after one_side_consecutive_cycles with max bid > one_side_bid_threshold, sell full
+  low-bid leg only when the high token best bid is still in the same trigger band on that tick; then
+  staged high + final rules per sell_strategy (see config/default.yaml).
+  pair_sum = low_leg sell price + current high token best bid (never YES+NO book sum). All post–low-sell
+  logic (staged high, HIGH_FULL vs threshold, final unwind) uses pair_sum only.
+  HIGH_PARTIAL slice size = liquidity_maker.portfolio_allocation_usdc / high_partial_max_cycles (capped by
+  remaining high leg); high_bid_change_decimals (default 2) detects bid change for follow-up chunks.
+  Trades append to trade_history_jsonl.
+- PROCESS LOG: If liquidity_maker.trading_process_jsonl is set, append NDJSON for phases
+  (MARKET_CYCLE_START, SPLIT, MONITOR, RESOLVED, REDEEM, etc.) and MONITOR_TICK lines
+  (bids, t_minus_s, rem_yes/rem_no, sell state when sell_strategy.enabled). Optional stdout via
+  trading_process_log_stdout; throttle with trading_process_log_interval_s (0 = every poll).
+- REDEEM: After redeem_delay_seconds, redeem via relayer.
+- POST_REDEEM: If post_redeem_monitor_seconds > 0 (or chain logging forces a minimum), poll books
+  and optionally CTF balances on-chain.
+
+Paper mode: no chain; monitor order book only (simulated sells if sell_strategy.enabled).
