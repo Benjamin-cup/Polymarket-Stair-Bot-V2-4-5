@@ -72,8 +72,6 @@ class SellStrategyConfig(BaseModel):
     hedge_target_vs_spot_cycles: int = 2
     hedge_buy_size_multiplier: float = 1.5
     hedge_order_type: str = "GTC"
-    # After first hedge, keep evaluating hedge gates; alternate buy-then-sell vs sell-then-buy each round.
-    hedge_repeat_enabled: bool = True
     # Live CLOB: retry create+post on errors / bad API response; refresh limit from last book poll between tries.
     order_submit_max_retries: int = 10
     order_submit_retry_delay_s: float = 0.4

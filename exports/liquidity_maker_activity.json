@@ -2408,5 +2408,565 @@
     "condition_id": "0x536d4255aaa6f3be61864e698d778fcbc093e28effb33551d6fa47f29ef4ac65",
     "amount_usdc": 5.0,
     "tx_hash": "0x29f5eda12cee55f8a4aa2b2147d2a87c9cc7599d4e3a7da1ecaef69c470b4cb5"
+  },
+  {
+    "ts_utc": "2026-04-05T12:45:44.072519Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775393100",
+    "condition_id": "0xb02053049c08e0fbbd1643de8943f987207718ef6bdaa4964ec79257dd52baea",
+    "amount_usdc": 4.208951,
+    "tx_hash": "0x15078f2468a09ae5e9e10f82ea0e4136f13a9a9af31f9cf546a40c0cde74ab1c"
+  },
+  {
+    "ts_utc": "2026-04-05T12:52:04.530268Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775393100",
+    "condition_id": "0xb02053049c08e0fbbd1643de8943f987207718ef6bdaa4964ec79257dd52baea",
+    "tx_hash": "0xd1d567f4fef7ed7a7a21c363f93f8e8c9e47b8cd7474b793c2ce668f091fe20d",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T12:52:09.116457Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775393400",
+    "condition_id": "0x2a49db490a91cdeaac9e4921f77d34e503419abd3aec9e06aea9d0cd6b9f9c33",
+    "amount_usdc": 4.208951,
+    "tx_hash": "0xb13aeff99447f2239bce2c5dd2be0e5899efa5d6bf2a5988a7cee16507f7e271"
+  },
+  {
+    "ts_utc": "2026-04-05T12:57:04.635188Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775393400",
+    "condition_id": "0x2a49db490a91cdeaac9e4921f77d34e503419abd3aec9e06aea9d0cd6b9f9c33",
+    "tx_hash": "0xd249d2a88dc8d146bce0aec70b7913812218e18cbfdef113f96ffc18e7402b21",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T12:57:11.336374Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775393700",
+    "condition_id": "0x3b360298dddf123e59e64703f3e695923e19f7f8e7515d48f606dcb745869933",
+    "amount_usdc": 4.208951,
+    "tx_hash": "0xc2a8054c8674c2cf594941b4f56d09cc4ac8b2d9318b9e585deb863d4848f5fd"
+  },
+  {
+    "ts_utc": "2026-04-05T13:02:04.515860Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775393700",
+    "condition_id": "0x3b360298dddf123e59e64703f3e695923e19f7f8e7515d48f606dcb745869933",
+    "tx_hash": "0x3c6b46ecf28e6e20624290af018416f1c9f6d115f8d2644cb7f4eeedffa0bb8d",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T13:02:09.092395Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775394000",
+    "condition_id": "0x19bf20dfb0fafe91b5db7ccfd94c5aa765c88b3345694203520aea0dc96951ba",
+    "amount_usdc": 4.267763,
+    "tx_hash": "0x7dfad1355b347218077030408e21ff559932d04c1cc2ba02a48c3a02c7a8466b"
+  },
+  {
+    "ts_utc": "2026-04-05T13:07:04.617560Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775394000",
+    "condition_id": "0x19bf20dfb0fafe91b5db7ccfd94c5aa765c88b3345694203520aea0dc96951ba",
+    "tx_hash": "0x1b341eecda68dacd25610aa7d7b50832aad02fdf2239cd8a4ae693fffab788dc",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T13:07:11.317320Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775394300",
+    "condition_id": "0x3a17d982b27654f25616692fdb437752102b113865ccf8c6401259d4ea1abdfa",
+    "amount_usdc": 4.267763,
+    "tx_hash": "0xd886f6f3c31eda0533ff1d3b45c36d7c2bc487ae009ab27263bf08fb8413206e"
+  },
+  {
+    "ts_utc": "2026-04-05T13:12:04.556235Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775394300",
+    "condition_id": "0x3a17d982b27654f25616692fdb437752102b113865ccf8c6401259d4ea1abdfa",
+    "tx_hash": "0xa20d2cb18d3baf0a7f98e8891548e7cdf524012c049523d7e2353baa2b760557",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T13:12:09.226142Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775394600",
+    "condition_id": "0xb77115845639d055eb636cc1cf3381c24c5baa3b142a6e679039a33c4efa8fc0",
+    "amount_usdc": 4.267763,
+    "tx_hash": "0x5a3362f1d7425391a7c070b5a38c18a698d0a87be3a03a77f1f97fd2346a2681"
+  },
+  {
+    "ts_utc": "2026-04-05T13:17:04.802508Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775394600",
+    "condition_id": "0xb77115845639d055eb636cc1cf3381c24c5baa3b142a6e679039a33c4efa8fc0",
+    "tx_hash": "0x7486c41e22c2de090141e545dc1d7a3cb3164e91394986a930e0c9442403b884",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T13:17:09.540024Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775394900",
+    "condition_id": "0x41f4adc688cababae4ee4a2897fa51fef34ca08d8145f2f81d9884c4fd7a8294",
+    "amount_usdc": 4.267763,
+    "tx_hash": "0xb66a41b5e222d98c24ee5e353d0f750b5d768437659a2c0fa3db738e802fb67e"
+  },
+  {
+    "ts_utc": "2026-04-05T13:22:04.505916Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775394900",
+    "condition_id": "0x41f4adc688cababae4ee4a2897fa51fef34ca08d8145f2f81d9884c4fd7a8294",
+    "tx_hash": "0x3e8e047359015fa873a2a6ae94b9f7a19dcf7efdd9b5069d3923c4ab01e412f3",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T13:22:11.298936Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775395200",
+    "condition_id": "0x572e2199dfb1244ecc68e47217b6fa0d881bed3ff1c31539ee1d7f66abd69e96",
+    "amount_usdc": 4.267763,
+    "tx_hash": "0x248c1b2ae3db5602b5dd4788a47025bf7094357c3dd2f3b71ac1544ebf63e754"
+  },
+  {
+    "ts_utc": "2026-04-05T13:27:04.708867Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775395200",
+    "condition_id": "0x572e2199dfb1244ecc68e47217b6fa0d881bed3ff1c31539ee1d7f66abd69e96",
+    "tx_hash": "0x3eeb6aaa8af432018c85e908d2745fd57bfb9c17a0b45c5efc28d03ad4000d85",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T13:27:09.555165Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775395500",
+    "condition_id": "0x3ff4ad18b58da79266e1fb766026808e85cfd63e7fb1e5d90c2c4e8dad8c7d9f",
+    "amount_usdc": 4.267763,
+    "tx_hash": "0x448a8b1c457dbaceb7636348206ac9b8b7bd16dc65f2f530dff4e948d8771426"
+  },
+  {
+    "ts_utc": "2026-04-05T13:32:04.543350Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775395500",
+    "condition_id": "0x3ff4ad18b58da79266e1fb766026808e85cfd63e7fb1e5d90c2c4e8dad8c7d9f",
+    "tx_hash": "0x581243f1a385265ec459081d811ff03486a9b4732be13e05045d8dee9ae892b1",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T13:32:09.179488Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775395800",
+    "condition_id": "0x292f61269c1ef809b1d4bcf920496c03cbb57b9b02d2251d6e4b54ccef94fc2a",
+    "amount_usdc": 4.267763,
+    "tx_hash": "0x8aadd37b16a1cc255512a1ad4d642a4ebc8d17a273c2e7c3fbb00226e978d7f6"
+  },
+  {
+    "ts_utc": "2026-04-05T13:37:04.486594Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775395800",
+    "condition_id": "0x292f61269c1ef809b1d4bcf920496c03cbb57b9b02d2251d6e4b54ccef94fc2a",
+    "tx_hash": "0xa30366cd16bd5a049f37ead1e376fb456025ff30afa8596d624863e1a0b93acf",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T13:37:11.211807Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775396100",
+    "condition_id": "0xb3ba468e6a26b55c67a26bda0b240e7f97f720e361f09146508d73d5ae7b1c0c",
+    "amount_usdc": 4.267763,
+    "tx_hash": "0xf00d2271470787c80d8c687e0aaec3b133aa9cb82e90e7b604a2766f7ac1aba7"
+  },
+  {
+    "ts_utc": "2026-04-05T13:42:04.528161Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775396100",
+    "condition_id": "0xb3ba468e6a26b55c67a26bda0b240e7f97f720e361f09146508d73d5ae7b1c0c",
+    "tx_hash": "0x6ac29c5a5dec649b1466287f809d35a86b72bace925cdb9ea9a0dbbbdf6c2373",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T13:42:09.423038Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775396400",
+    "condition_id": "0xccc8d48b366fe956cc6286fa49770b99fd44806baf1353a682c8147a06f4b859",
+    "amount_usdc": 4.316319,
+    "tx_hash": "0xacc96138af1831026b231ebdb847a34223cc3b544bb5061ec8084bbc990dd99f"
+  },
+  {
+    "ts_utc": "2026-04-05T13:47:04.477763Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775396400",
+    "condition_id": "0xccc8d48b366fe956cc6286fa49770b99fd44806baf1353a682c8147a06f4b859",
+    "tx_hash": "0xf186856e347d378c35d0a1bd3d4aa950cedd6adf604a3cfe3d92500c605b6a5d",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T13:47:09.170873Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775396700",
+    "condition_id": "0x5811ad2fcb4142c3abc512b78df7e2d0142c719c9a9673d9b926da6ed2d00133",
+    "amount_usdc": 4.347577,
+    "tx_hash": "0x404a320b21748985f9ba70d4a1bfef01af9f01b0765546365df1c867a7823e19"
+  },
+  {
+    "ts_utc": "2026-04-05T13:52:04.449283Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775396700",
+    "condition_id": "0x5811ad2fcb4142c3abc512b78df7e2d0142c719c9a9673d9b926da6ed2d00133",
+    "tx_hash": "0x585cd1a7fcd28d644d7eb8ba49f66f29aab286d9e0801e2a2d5aa99642987f04",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T13:52:11.336762Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775397000",
+    "condition_id": "0xeb4224bcdaf0e1fcdd599877afa19fe3e665543d6cc31a0bfcc86352e9d6313c",
+    "amount_usdc": 4.379155,
+    "tx_hash": "0x285502dc1d15c1f95038b54c65db71d613484a714210874a4a8e229dda00e920"
+  },
+  {
+    "ts_utc": "2026-04-05T14:02:33.235991Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775397600",
+    "condition_id": "0x0e264db628e842383de9feb73bb30d3ca19e55b25af51ff8160631a18a778dcb",
+    "amount_usdc": 4.404662,
+    "tx_hash": "0xd3e717b9397c3a1ec69488735f972e38033b2e95822ebe3caf5f9eb7e9e7ccbf"
+  },
+  {
+    "ts_utc": "2026-04-05T14:07:04.516341Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775397600",
+    "condition_id": "0x0e264db628e842383de9feb73bb30d3ca19e55b25af51ff8160631a18a778dcb",
+    "tx_hash": "0x069d0f7ff88c23123a8e1dc3261c1074f9425c9ac746d9d5296bea0036f42158",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T14:07:11.173177Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775397900",
+    "condition_id": "0x148b7d108f1d98df0c4c5dcfa342cab829ba7b80e9ff964fb9693a8b0ad422f1",
+    "amount_usdc": 4.404662,
+    "tx_hash": "0xcecb7c3bd2d60fba36cada3777d6539816705a645b8f1a3d682cbe0bee32bf7c"
+  },
+  {
+    "ts_utc": "2026-04-05T14:12:04.539028Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775397900",
+    "condition_id": "0x148b7d108f1d98df0c4c5dcfa342cab829ba7b80e9ff964fb9693a8b0ad422f1",
+    "tx_hash": "0xac34bcf04a14e0e55f9ec7e9b9b4214528cc244bbe755deca54f3db0c024d64d",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T14:12:09.360237Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775398200",
+    "condition_id": "0xc81c7848fafa5f16490cd5023a9e8dab3f7cdb1edfb6d7d1a441cfde41f6a5c7",
+    "amount_usdc": 4.404662,
+    "tx_hash": "0xad307bb7a283e8a217b45ea46dcd84b4812cb1bdfbf1232812f40a7e7260c069"
+  },
+  {
+    "ts_utc": "2026-04-05T14:17:04.476174Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775398200",
+    "condition_id": "0xc81c7848fafa5f16490cd5023a9e8dab3f7cdb1edfb6d7d1a441cfde41f6a5c7",
+    "tx_hash": "0x96915884026a317df3f140998db3b742611db94dd2a8d19627a031ca7e735536",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T14:17:09.098989Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775398500",
+    "condition_id": "0x46056c697686abb257ae44e18c9718d5cbec52d7af8fb92e8049b73b93a5272e",
+    "amount_usdc": 4.404662,
+    "tx_hash": "0x125b242055b80a2508122d2ffb6cdc73069baef297d95a7065426b23cfb1a24c"
+  },
+  {
+    "ts_utc": "2026-04-05T14:22:04.548011Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775398500",
+    "condition_id": "0x46056c697686abb257ae44e18c9718d5cbec52d7af8fb92e8049b73b93a5272e",
+    "tx_hash": "0x12f4d323933b85d4d56b2204ac70d1241512d2139333c9a412c188f85647c641",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T14:22:09.402494Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775398800",
+    "condition_id": "0x3e218fcf8bbef1254b6f0fbb25461729a5f656d83f28051cb7155f72eb5b80ba",
+    "amount_usdc": 4.446727,
+    "tx_hash": "0x3ad4b6dde53e41c1faee9aeb3986e36b99bc363a7dfb9491e3d73dabfc509da5"
+  },
+  {
+    "ts_utc": "2026-04-05T14:27:04.484526Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775398800",
+    "condition_id": "0x3e218fcf8bbef1254b6f0fbb25461729a5f656d83f28051cb7155f72eb5b80ba",
+    "tx_hash": "0x2a7e6283f6c795fb1c3d309ffd080d899e72e711a7666f8586085f7b6a04ff43",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T14:27:09.106746Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775399100",
+    "condition_id": "0x101860b95e62a2ae185dc80ae9966992f592b76b6c6732067eb7f4333db56170",
+    "amount_usdc": 4.475846,
+    "tx_hash": "0x2dda417dbc291e5c4908703dfc50555983d82f3e623f095274524c84346c60e4"
+  },
+  {
+    "ts_utc": "2026-04-05T14:32:04.499220Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775399100",
+    "condition_id": "0x101860b95e62a2ae185dc80ae9966992f592b76b6c6732067eb7f4333db56170",
+    "tx_hash": "0x1491c3833027c4efde715dc976dea01f6dd00e4f552080f6d8d73038d0c0b0c5",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T14:32:09.093635Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775399400",
+    "condition_id": "0x2d3ff0cc2f73ae6dddfd53ba6e9360a65b1f84f281920808cc7e7b017466ed73",
+    "amount_usdc": 4.499194,
+    "tx_hash": "0x93bd6f2790fc1707f325f1b82d371adeab6bea8fb863a9886c46966419337758"
+  },
+  {
+    "ts_utc": "2026-04-05T14:37:04.566435Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775399400",
+    "condition_id": "0x2d3ff0cc2f73ae6dddfd53ba6e9360a65b1f84f281920808cc7e7b017466ed73",
+    "tx_hash": "0x926f6441f84e7856b565fc261600903b6fe5f2ceea77b3c6c12b532493dd4a3e",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T14:37:11.212148Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775399700",
+    "condition_id": "0x0d7e510b8bda77be9f1d8a5c21f3a7f13028cb4f728a67648d252596bcb92733",
+    "amount_usdc": 4.499194,
+    "tx_hash": "0x659e8175daf049bbdb84242f84407b977623335c98dc682a8eb51aeca195fc1c"
+  },
+  {
+    "ts_utc": "2026-04-05T14:42:04.505393Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775399700",
+    "condition_id": "0x0d7e510b8bda77be9f1d8a5c21f3a7f13028cb4f728a67648d252596bcb92733",
+    "tx_hash": "0x0c8bebd4ba35280432532902584e40ca55dd861c11c01ec6a4b0a9e20d8b209a",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T14:42:11.256074Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775400000",
+    "condition_id": "0x07ad0c743a6b065566c118b3a142839ff71b6adf3e974a9737f451f58682d593",
+    "amount_usdc": 4.499194,
+    "tx_hash": "0x3d5f87592a3abf24bbf36774f903dcbff5af9c53acd5c5014757669c957c8a79"
+  },
+  {
+    "ts_utc": "2026-04-05T14:47:04.539962Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775400000",
+    "condition_id": "0x07ad0c743a6b065566c118b3a142839ff71b6adf3e974a9737f451f58682d593",
+    "tx_hash": "0xa473e6059e95532da4c106ca5dfc0e92c166c65914d25c9097c7f7a9f55cdad4",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T14:47:09.334340Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775400300",
+    "condition_id": "0x3fe51189d64d842571aa3732c0d140e73cb81ba89160a3f2d865ec61899b5322",
+    "amount_usdc": 2.432407,
+    "tx_hash": "0x814d2364e002ecb5b55b2d305bafdceb705a1da3cd66238c07a45bf346978875"
+  },
+  {
+    "ts_utc": "2026-04-05T14:52:04.489526Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775400300",
+    "condition_id": "0x3fe51189d64d842571aa3732c0d140e73cb81ba89160a3f2d865ec61899b5322",
+    "tx_hash": "0x8a1df0b68611e01120883cbbfab364505cc1c56c937112df2db9090fc4e4e163",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T14:52:09.155539Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775400600",
+    "condition_id": "0xb3e8dc00c7b7c60c9348d24d46de3e2b45a50a47bfb4a82f33ed0e734e3cc95e",
+    "amount_usdc": 2.453484,
+    "tx_hash": "0xc1275349e16a4b9d146fe79f13909ca523ca12e0d0f89bbdb4ab3cca08ba2e3c"
+  },
+  {
+    "ts_utc": "2026-04-05T14:57:04.505589Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775400600",
+    "condition_id": "0xb3e8dc00c7b7c60c9348d24d46de3e2b45a50a47bfb4a82f33ed0e734e3cc95e",
+    "tx_hash": "0x9802505fe376ba59ba10db1e20fab8b5fb3bb63d4521c26cc01f4dda4e85e7b6",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T14:57:09.107971Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775400900",
+    "condition_id": "0xbddaff0d9fedb0523a24e0a231b2b61678805640817e662c6c1619801a654c9e",
+    "amount_usdc": 2.467387,
+    "tx_hash": "0xbb3459bd97ce2612faee76e0232c870883995e779b731784799d8af0e4ffa3be"
+  },
+  {
+    "ts_utc": "2026-04-05T15:02:04.518059Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775400900",
+    "condition_id": "0xbddaff0d9fedb0523a24e0a231b2b61678805640817e662c6c1619801a654c9e",
+    "tx_hash": "0x3cdebe99aebd4a4ccc8c858606c95e8907e5f910d7e8674e256e1aa3b48d0de0",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T15:02:11.408003Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775401200",
+    "condition_id": "0xe96fe9b76fed3ef5fca1ea863bbc01f9515e92fc5eba9c01decb8fc5a670626d",
+    "amount_usdc": 2.485356,
+    "tx_hash": "0xada162dc0e3f86f2feb675c49c5a99208147599d4cea236315c8bc7f4959695e"
+  },
+  {
+    "ts_utc": "2026-04-05T15:07:04.465246Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775401200",
+    "condition_id": "0xe96fe9b76fed3ef5fca1ea863bbc01f9515e92fc5eba9c01decb8fc5a670626d",
+    "tx_hash": "0x5312eb02e087fcbe7d221ea187a76947b0f0d8a00f3f474a1c2b111c7268e848",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T15:07:11.304856Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775401500",
+    "condition_id": "0x029096332834ff77d3c1e0d03f72f3df60f60e5d12fc8fe5d213b9730d075ba9",
+    "amount_usdc": 2.519055,
+    "tx_hash": "0x839d7d15127b83b4c79203d15fda583d744d10d2588bb52a71e73942c0314edc"
+  },
+  {
+    "ts_utc": "2026-04-05T15:12:04.508280Z",
+    "type": "redeem",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775401500",
+    "condition_id": "0x029096332834ff77d3c1e0d03f72f3df60f60e5d12fc8fe5d213b9730d075ba9",
+    "tx_hash": "0xc67f5fbbecfcd182beed1b7662cafcf59941cdb832ce267bf9982a71a8fd057b",
+    "error": null
+  },
+  {
+    "ts_utc": "2026-04-05T15:12:09.173112Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775401800",
+    "condition_id": "0xe6bfa4c24b002374269f9514d614c4398d37a6194735293510722bd1954d29a9",
+    "amount_usdc": 2.547505,
+    "tx_hash": "0xf2a7dd2cc084aeb35cda8074aadf41d57710e1e68761b97543fcebb3a30fa27a"
   }
 ]

@@ -583,7 +583,7 @@ class SellStrategyRunner:
             return
         if not self.low_sold or self.locked_high_side is None:
             return
-        if not cfg.hedge_repeat_enabled and self.hedge_round_count >= 1:
+        if self.hedge_executed:
             return
         min_s = cfg.min_sell_shares
         hs = self.locked_high_side
@@ -601,15 +601,6 @@ class SellStrategyRunner:
                 and bid_yes > sold_min
             )
 
-        def yes_flip_phase() -> bool:
-            return (
-                hs == "no"
-                and self.rem_yes >= min_s
-                and self.rem_no < min_s
-                and bid_no < opp_max
-                and bid_yes > sold_min
-            )
-
         def no_initial_phase() -> bool:
             return (
                 hs == "yes"
@@ -618,17 +609,6 @@ class SellStrategyRunner:
                 and bid_yes < opp_max
                 and bid_no > sold_min
             )
-
-        def no_flip_phase() -> bool:
-            return (
-                hs == "yes"
-                and self.rem_no >= min_s
-                and self.rem_yes < min_s
-                and bid_yes < opp_max
-                and bid_no > sold_min
-            )
-
-        want_initial = self.hedge_round_count % 2 == 0
 
         async def exec_yes_arm_initial_buy_first() -> None:
             if buy_sz < min_s:
@@ -644,22 +624,6 @@ class SellStrategyRunner:
                 print(
                     f"  {self.tag} [HEDGE] round={self.hedge_round_count} "
                     "buy YES then sell NO (initial)",
-                )
-
-        async def exec_yes_arm_flip_sell_first() -> None:
-            sell_yes = self.rem_yes
-            if sell_yes < min_s or buy_sz < min_s:
-                return
-            ok_sell = await self._place_sell_limit("yes", bid_yes, sell_yes, "HEDGE_SELL_YES")
-            if not ok_sell:
-                return
-            buy_px = float(ask_no) if ask_no and ask_no > 0 else bid_no
-            ok_buy = await self._place_buy_limit("no", buy_px, buy_sz, "HEDGE_BUY_NO")
-            if ok_buy:
-                self._mark_hedge_round_complete()
-                print(
-                    f"  {self.tag} [HEDGE] round={self.hedge_round_count} "
-                    "sell YES then buy NO (flip)",
                 )
 
         async def exec_no_arm_initial_buy_first() -> None:
@@ -678,35 +642,13 @@ class SellStrategyRunner:
                     "buy NO then sell YES (initial)",
                 )
 
-        async def exec_no_arm_flip_sell_first() -> None:
-            sell_no = self.rem_no
-            if sell_no < min_s or buy_sz < min_s:
-                return
-            ok_sell = await self._place_sell_limit("no", bid_no, sell_no, "HEDGE_SELL_NO")
-            if not ok_sell:
-                return
-            buy_px = float(ask_yes) if ask_yes and ask_yes > 0 else bid_yes
-            ok_buy = await self._place_buy_limit("yes", buy_px, buy_sz, "HEDGE_BUY_YES")
-            if ok_buy:
-                self._mark_hedge_round_complete()
-                print(
-                    f"  {self.tag} [HEDGE] round={self.hedge_round_count} "
-                    "sell NO then buy YES (flip)",
-                )
-
         # Backtest: hedge when book gates pass; no strike vs chain spot (not available in replay).
         if not self.hedge_require_strike_spot:
-            if want_initial and yes_initial_phase():
+            if yes_initial_phase():
                 await exec_yes_arm_initial_buy_first()
                 return
-            if not want_initial and yes_flip_phase():
-                await exec_yes_arm_flip_sell_first()
-                return
-            if want_initial and no_initial_phase():
+            if no_initial_phase():
                 await exec_no_arm_initial_buy_first()
-                return
-            if not want_initial and no_flip_phase():
-                await exec_no_arm_flip_sell_first()
                 return
             self.hedge_cycles_strike_lt_spot = 0
             self.hedge_cycles_strike_gt_spot = 0
@@ -716,12 +658,7 @@ class SellStrategyRunner:
             self.hedge_cycles_strike_lt_spot = 0
             self.hedge_cycles_strike_gt_spot = 0
             if (
-                (
-                    yes_initial_phase()
-                    or yes_flip_phase()
-                    or no_initial_phase()
-                    or no_flip_phase()
-                )
+                (yes_initial_phase() or no_initial_phase())
                 and not self._hedge_warned_no_strike_spot
             ):
                 self._hedge_warned_no_strike_spot = True
@@ -733,7 +670,7 @@ class SellStrategyRunner:
         st = float(strike)
         sp = float(spot)
 
-        if (want_initial and yes_initial_phase()) or (not want_initial and yes_flip_phase()):
+        if yes_initial_phase():
             self.hedge_cycles_strike_gt_spot = 0
             if st < sp:
                 self.hedge_cycles_strike_lt_spot += 1
@@ -741,13 +678,10 @@ class SellStrategyRunner:
                 self.hedge_cycles_strike_lt_spot = 0
             if self.hedge_cycles_strike_lt_spot < n_need or buy_sz < min_s:
                 return
-            if want_initial:
-                await exec_yes_arm_initial_buy_first()
-            else:
-                await exec_yes_arm_flip_sell_first()
+            await exec_yes_arm_initial_buy_first()
             return
 
-        if (want_initial and no_initial_phase()) or (not want_initial and no_flip_phase()):
+        if no_initial_phase():
             self.hedge_cycles_strike_lt_spot = 0
             if st > sp:
                 self.hedge_cycles_strike_gt_spot += 1
@@ -755,10 +689,7 @@ class SellStrategyRunner:
                 self.hedge_cycles_strike_gt_spot = 0
             if self.hedge_cycles_strike_gt_spot < n_need or buy_sz < min_s:
                 return
-            if want_initial:
-                await exec_no_arm_initial_buy_first()
-            else:
-                await exec_no_arm_flip_sell_first()
+            await exec_no_arm_initial_buy_first()
             return
 
         self.hedge_cycles_strike_lt_spot = 0
