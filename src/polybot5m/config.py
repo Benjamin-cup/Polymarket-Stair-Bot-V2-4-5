@@ -72,6 +72,12 @@ class SellStrategyConfig(BaseModel):
     hedge_target_vs_spot_cycles: int = 2
     hedge_buy_size_multiplier: float = 1.5
     hedge_order_type: str = "GTC"
+    # After first hedge: optional second leg (sell inventory, buy back the leg sold in hedge 1).
+    hedge_second_enabled: bool = True
+    # Recovered-side best bid must exceed this (e.g. YES bid after YES was sold out in hedge 1).
+    hedge_second_recovered_bid_above: float = 0.5
+    # Live: consecutive monitor ticks where strike vs spot matches the second-hedge direction.
+    hedge_second_strike_spot_cycles: int = 2
     # Live CLOB: retry create+post on errors / bad API response; refresh limit from last book poll between tries.
     order_submit_max_retries: int = 10
     order_submit_retry_delay_s: float = 0.4

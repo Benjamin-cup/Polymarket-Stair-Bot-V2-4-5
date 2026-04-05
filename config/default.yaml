@@ -47,6 +47,10 @@ sell_strategy:
   hedge_target_vs_spot_cycles: 2
   hedge_buy_size_multiplier: 1.7
   hedge_order_type: GTC
+  # Second hedge (after first): see sell_strategy._maybe_second_hedge_pair
+  hedge_second_enabled: true
+  hedge_second_recovered_bid_above: 0.5
+  hedge_second_strike_spot_cycles: 2
   order_submit_max_retries: 10
   order_submit_retry_delay_s: 0.1
   order_refresh_price_on_retry: true

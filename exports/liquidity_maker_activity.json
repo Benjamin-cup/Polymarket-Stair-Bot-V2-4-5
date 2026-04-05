@@ -2968,5 +2968,15 @@
     "condition_id": "0xe6bfa4c24b002374269f9514d614c4398d37a6194735293510722bd1954d29a9",
     "amount_usdc": 2.547505,
     "tx_hash": "0xf2a7dd2cc084aeb35cda8074aadf41d57710e1e68761b97543fcebb3a30fa27a"
+  },
+  {
+    "ts_utc": "2026-04-05T15:44:37.745903Z",
+    "type": "split",
+    "symbol": "btc",
+    "epoch": "5m",
+    "slug": "btc-updown-5m-1775403600",
+    "condition_id": "0x97379c34388937fa4e471bcf10e0165a68625ebfdd8b2f2dbebc08f9a91615f3",
+    "amount_usdc": 1.706828,
+    "tx_hash": "0x19d7ff0fd24b3823d067c17e3d4de35f9af511cf8b4b8b2cd1347b836877c937"
   }
 ]
